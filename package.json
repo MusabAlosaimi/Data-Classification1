@@ -1,0 +1,55 @@
+{
+  "name": "sdaia-data-classification-tool",
+  "version": "1.0.0",
+  "description": "Interactive tool for classifying data according to Saudi Data & AI Authority National Data Governance Policies",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint src --ext .js,.jsx",
+    "lint:fix": "eslint src --ext .js,.jsx --fix",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "lucide-react": "^0.263.1",
+    "clsx": "^2.0.0",
+    "class-variance-authority": "^0.7.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.15",
+    "@types/react-dom": "^18.2.7",
+    "@vitejs/plugin-react": "^4.0.3",
+    "autoprefixer": "^10.4.15",
+    "eslint": "^8.45.0",
+    "eslint-plugin-react": "^7.32.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.3",
+    "postcss": "^8.4.27",
+    "tailwindcss": "^3.3.3",
+    "vite": "^4.4.5",
+    "vitest": "^0.34.1"
+  },
+  "keywords": [
+    "data-classification",
+    "sdaia",
+    "saudi-arabia",
+    "data-governance",
+    "privacy",
+    "security",
+    "compliance"
+  ],
+  "author": "Your Name <your.email@domain.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/sdaia-data-classification-tool.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/sdaia-data-classification-tool/issues"
+  },
+  "homepage": "https://github.com/yourusername/sdaia-data-classification-tool#readme"
+}
