@@ -2,7 +2,6 @@
 # Run this in Google Colab or local environment
 
 # Install required packages
-!pip install streamlit google-genai
 
 import streamlit as st
 from google import genai
