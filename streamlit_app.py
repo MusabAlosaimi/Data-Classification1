@@ -377,8 +377,7 @@ def main():
                 st.session_state.user_input = example
 
     # Footer
-   
-
+  
 if __name__ == "__main__":
     main()
 
