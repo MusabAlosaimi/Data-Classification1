@@ -373,8 +373,9 @@ def main():
             ]
         
         for example in examples:
-            if st.button(f"📄 {example}", key=f"ex_{example}"):
-                st.session_state.user_input = example
+            if st.button(f"📄 {example}", key=f"ex_{hash(example)}"):
+                st.session_state.chat_input_area = example
+                st.rerun()
 
     # Footer
     st.markdown("---")
