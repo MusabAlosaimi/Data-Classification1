@@ -377,7 +377,13 @@ def main():
                 st.session_state.user_input = example
 
     # Footer
-  
+    st.markdown("---")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("### 🚀 [Get your Gemini API Key](https://makersuite.google.com/app/apikey)")
+    with col2:
+        st.markdown("### 🔐 [Setup Streamlit Secrets](https://docs.streamlit.io/streamlit-community-cloud/get-started/deploy-an-app/connect-to-data-sources/secrets-management)")
+
 if __name__ == "__main__":
     main()
 
