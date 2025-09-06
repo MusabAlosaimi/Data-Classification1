@@ -5,88 +5,168 @@
 
 import streamlit as st
 from google import genai
+import time
 
 # Configure page
 st.set_page_config(
     page_title="DMO-Classification Assistant",
     page_icon="🛡️",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
-# Custom CSS for better design
-st.markdown("""
-<style>
-    .main-header {
-        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-        padding: 2rem;
-        border-radius: 10px;
-        color: white;
-        text-align: center;
-        margin-bottom: 2rem;
-    }
-    .chat-container {
-        background: #f8f9fa;
-        padding: 1rem;
-        border-radius: 10px;
-        border-left: 4px solid #667eea;
-        margin: 1rem 0;
-    }
-    .user-message {
-        background: #e3f2fd;
-        padding: 1rem;
-        border-radius: 10px;
-        margin: 0.5rem 0;
-    }
-    .assistant-message {
-        background: #f3e5f5;
-        padding: 1rem;
-        border-radius: 10px;
-        margin: 0.5rem 0;
-    }
-    .classification-result {
-        background: #e8f5e8;
-        padding: 1.5rem;
-        border-radius: 10px;
-        border-left: 4px solid #4caf50;
-        margin: 1rem 0;
-    }
-    .error-message {
-        background: #ffebee;
-        padding: 1rem;
-        border-radius: 10px;
-        border-left: 4px solid #f44336;
-        margin: 1rem 0;
-    }
-    .lang-button {
-        background: #667eea;
-        color: white;
-        border: none;
-        padding: 0.5rem 1rem;
-        border-radius: 5px;
-        margin: 0.25rem;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-# Initialize session state
+# Initialize session state for theme
+if 'theme' not in st.session_state:
+    st.session_state.theme = 'light'
 if 'language' not in st.session_state:
     st.session_state.language = 'english'
 if 'chat_history' not in st.session_state:
     st.session_state.chat_history = []
+
+def toggle_theme():
+    """Toggle between light and dark mode"""
+    st.session_state.theme = 'dark' if st.session_state.theme == 'light' else 'light'
+
+def get_css(theme):
+    """Return CSS based on selected theme"""
+    if theme == 'dark':
+        return """
+        <style>
+            .stApp {
+                background-color: #1E1E1E;
+                color: #FFFFFF;
+            }
+            .main-header {
+                background: linear-gradient(90deg, #4A5568 0%, #2D3748 100%);
+                padding: 2rem;
+                border-radius: 10px;
+                color: white;
+                text-align: center;
+                margin-bottom: 2rem;
+            }
+            .chat-container {
+                background: #2D3748;
+                padding: 1rem;
+                border-radius: 10px;
+                border-left: 4px solid #4A5568;
+                margin: 1rem 0;
+                color: #E2E8F0;
+            }
+            .user-message {
+                background: #2C5282;
+                padding: 1rem;
+                border-radius: 10px;
+                margin: 0.5rem 0;
+                color: #E2E8F0;
+            }
+            .assistant-message {
+                background: #553C9A;
+                padding: 1rem;
+                border-radius: 10px;
+                margin: 0.5rem 0;
+                color: #E2E8F0;
+            }
+            .classification-result {
+                background: #22543D;
+                padding: 1.5rem;
+                border-radius: 10px;
+                border-left: 4px solid #38A169;
+                margin: 1rem 0;
+                color: #E2E8F0;
+            }
+            .error-message {
+                background: #742A2A;
+                padding: 1rem;
+                border-radius: 10px;
+                border-left: 4px solid #E53E3E;
+                margin: 1rem 0;
+                color: #E2E8F0;
+            }
+            .guide-box {
+                background: #2D3748;
+                padding: 1.5rem;
+                border-radius: 10px;
+                margin: 1rem 0;
+                color: #E2E8F0;
+            }
+            .stButton button {
+                background: #4A5568;
+                color: white;
+            }
+            .stTextInput input {
+                background: #2D3748;
+                color: #E2E8F0;
+            }
+            .stTextArea textarea {
+                background: #2D3748;
+                color: #E2E8F0;
+            }
+        </style>
+        """
+    else:
+        return """
+        <style>
+            .main-header {
+                background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+                padding: 2rem;
+                border-radius: 10px;
+                color: white;
+                text-align: center;
+                margin-bottom: 2rem;
+            }
+            .chat-container {
+                background: #f8f9fa;
+                padding: 1rem;
+                border-radius: 10px;
+                border-left: 4px solid #667eea;
+                margin: 1rem 0;
+            }
+            .user-message {
+                background: #e3f2fd;
+                padding: 1rem;
+                border-radius: 10px;
+                margin: 0.5rem 0;
+            }
+            .assistant-message {
+                background: #f3e5f5;
+                padding: 1rem;
+                border-radius: 10px;
+                margin: 0.5rem 0;
+            }
+            .classification-result {
+                background: #e8f5e8;
+                padding: 1.5rem;
+                border-radius: 10px;
+                border-left: 4px solid #4caf50;
+                margin: 1rem 0;
+            }
+            .error-message {
+                background: #ffebee;
+                padding: 1rem;
+                border-radius: 10px;
+                border-left: 4px solid #f44336;
+                margin: 1rem 0;
+            }
+            .guide-box {
+                background: #f8f9fa;
+                padding: 1.5rem;
+                border-radius: 10px;
+                margin: 1rem 0;
+            }
+        </style>
+        """
 
 def get_messages(lang):
     """Get messages in selected language"""
     if lang == "arabic":
         return {
             "welcome": "مرحباً! اسمي DMO-Classification Assistant وأنا هنا لمساعدتك في التصنيف الصحيح! 🛡️",
-            "api_key": "🔑 أدخل مفتاح Gemini API الخاص بك",
             "chat_input": "اكتب رسالتك هنا...",
             "send": "إرسال",
             "clear": "مسح المحادثة",
             "english": "English",
             "arabic": "العربية",
-            "no_api": "❌ يرجى إدخال مفتاح API أولاً",
+            "no_api": "❌ لم يتم العثور على مفتاح API. يرجى التحقق من إعدادات الأسرار.",
             "thinking": "🤔 جاري التفكير...",
             "guide_title": "📋 دليل التصنيف السريع",
             "out_of_scope": "آسف، أنا DMO-Classification Assistant متخصص في تصنيف البيانات فقط. يرجى سؤالي عن تصنيف البيانات.",
@@ -98,18 +178,18 @@ def get_messages(lang):
             **🟡 محدود**: بيانات شخصية، أسرار تجارية
             **🔵 داخلي**: سياسات الشركة، مذكرات داخلية
             **🟢 عام**: إعلانات، مواد تسويقية
-            """
+            """,
+            "theme_toggle": "تبديل الوضع الليلي/النهاري"
         }
     else:
         return {
             "welcome": "Hi! My name is DMO-Classification Assistant and I'm here to help you classify right! 🛡️",
-            "api_key": "🔑 Enter your Gemini API Key",
             "chat_input": "Type your message here...",
             "send": "Send",
             "clear": "Clear Chat",
             "english": "English",
             "arabic": "العربية",
-            "no_api": "❌ Please enter your API key first",
+            "no_api": "❌ API key not found. Please check your secrets setup.",
             "thinking": "🤔 Thinking...",
             "guide_title": "📋 Quick Classification Guide",
             "out_of_scope": "Sorry, I'm DMO-Classification Assistant specialized in data classification only. Please ask me about data classification.",
@@ -121,7 +201,8 @@ def get_messages(lang):
             **🟡 CONFIDENTIAL**: Personal data, business secrets
             **🔵 INTERNAL**: Company policies, internal memos
             **🟢 PUBLIC**: Press releases, marketing materials
-            """
+            """,
+            "theme_toggle": "Toggle Dark/Light Mode"
         }
 
 def is_classification_related(text):
@@ -210,7 +291,7 @@ Give:
 - Then ask: "What do you think the classification should be?"
 """
 
-def chat_with_assistant(api_key, user_input, lang):
+def chat_with_assistant(user_input, lang):
     """Main chat function"""
     
     messages = get_messages(lang)
@@ -220,6 +301,12 @@ def chat_with_assistant(api_key, user_input, lang):
         return messages["out_of_scope"]
     
     try:
+        # Get API key from secrets
+        if 'GEMINI_API_KEY' in st.secrets:
+            api_key = st.secrets['GEMINI_API_KEY']
+        else:
+            return messages["no_api"]
+        
         client = genai.Client(api_key=api_key)
         
         # Check if user is providing their classification guess
@@ -265,6 +352,9 @@ def chat_with_assistant(api_key, user_input, lang):
 def main():
     """Main Streamlit app"""
     
+    # Apply CSS based on theme
+    st.markdown(get_css(st.session_state.theme), unsafe_allow_html=True)
+    
     # Header
     st.markdown("""
     <div class="main-header">
@@ -273,95 +363,47 @@ def main():
     </div>
     """, unsafe_allow_html=True)
     
-    # Language selection
-    col1, col2, col3 = st.columns([1, 1, 2])
-    with col1:
-        if st.button("🇺🇸 English", key="en_btn"):
-            st.session_state.language = 'english'
+    # Sidebar for settings
+    with st.sidebar:
+        st.header("Settings")
+        
+        # Theme toggle
+        messages = get_messages(st.session_state.language)
+        if st.button(messages["theme_toggle"]):
+            toggle_theme()
+            time.sleep(0.1)  # Small delay to ensure theme changes
             st.rerun()
-    with col2:
-        if st.button("🇸🇦 العربية", key="ar_btn"):
-            st.session_state.language = 'arabic'
-            st.rerun()
-    
-    messages = get_messages(st.session_state.language)
-    
-    # Welcome message
-    st.markdown(f"""
-    <div class="chat-container">
-        <h3>👋 {messages['welcome']}</h3>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Main layout
-    col1, col2 = st.columns([2, 1])
-    
-    with col1:
-        # API Key
-        api_key = st.text_input(
-            messages["api_key"],
-            type="password",
-            key="api_key"
-        )
         
-        # Chat interface
-        st.markdown("### 💬 Chat")
+        # API status
+        st.subheader("API Status")
+        if 'GEMINI_API_KEY' in st.secrets:
+            st.success("✅ API Key Configured")
+        else:
+            st.error("❌ API Key Missing")
+            st.info("Please set GEMINI_API_KEY in your Streamlit secrets")
         
-        # Display chat history
-        for i, chat in enumerate(st.session_state.chat_history):
-            st.markdown(f"""
-            <div class="user-message">
-                <strong>You:</strong> {chat['user']}
-            </div>
-            """, unsafe_allow_html=True)
-            
-            st.markdown(f"""
-            <div class="assistant-message">
-                <strong>DMO-Assistant:</strong> {chat['assistant']}
-            </div>
-            """, unsafe_allow_html=True)
+        # Language selection
+        st.subheader("Language")
+        lang_col1, lang_col2 = st.columns(2)
+        with lang_col1:
+            if st.button("🇺🇸 English", use_container_width=True):
+                st.session_state.language = 'english'
+                st.rerun()
+        with lang_col2:
+            if st.button("🇸🇦 العربية", use_container_width=True):
+                st.session_state.language = 'arabic'
+                st.rerun()
         
-        # Chat input
-        user_input = st.text_area(
-            messages["chat_input"],
-            height=100,
-            key="user_input"
-        )
-        
-        # Buttons
-        send_col, clear_col = st.columns([1, 1])
-        with send_col:
-            send_btn = st.button(messages["send"], type="primary")
-        with clear_col:
-            clear_btn = st.button(messages["clear"])
-        
-        # Process message
-        if send_btn and user_input.strip():
-            if not api_key:
-                st.error("❌ No API key available")
-            else:
-                with st.spinner(messages["thinking"]):
-                    response = chat_with_assistant(api_key, user_input, st.session_state.language)
-                    
-                    # Add to chat history
-                    st.session_state.chat_history.append({
-                        "user": user_input,
-                        "assistant": response
-                    })
-                    st.rerun()
-        
-        # Clear chat
-        if clear_btn:
-            st.session_state.chat_history = []
-            st.rerun()
-    
-    with col2:
         # Quick guide
-        st.markdown(f"### {messages['guide_title']}")
-        st.markdown(messages['guide'])
+        st.subheader(messages["guide_title"])
+        st.markdown(f"""
+        <div class="guide-box">
+            {messages['guide']}
+        </div>
+        """, unsafe_allow_html=True)
         
         # Examples
-        st.markdown("### 💡 Examples")
+        st.subheader("💡 Examples")
         if st.session_state.language == 'arabic':
             examples = [
                 "ملف إكسل بيانات الموظفين",
@@ -378,26 +420,68 @@ def main():
             ]
         
         for example in examples:
-            if st.button(f"📄 {example}", key=f"ex_{hash(example)}"):
-                st.session_state.chat_input_area = example
-                st.rerun()
+            if st.button(f"📄 {example}", use_container_width=True, key=f"ex_{hash(example)}"):
+                st.session_state.user_input = example
+    
+    # Welcome message
+    messages = get_messages(st.session_state.language)
+    st.markdown(f"""
+    <div class="chat-container">
+        <h3>👋 {messages['welcome']}</h3>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Display chat history
+    for i, chat in enumerate(st.session_state.chat_history):
+        st.markdown(f"""
+        <div class="user-message">
+            <strong>You:</strong> {chat['user']}
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown(f"""
+        <div class="assistant-message">
+            <strong>DMO-Assistant:</strong> {chat['assistant']}
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # Chat input
+    user_input = st.text_area(
+        messages["chat_input"],
+        height=100,
+        key="user_input"
+    )
+    
+    # Buttons
+    col1, col2 = st.columns(2)
+    with col1:
+        send_btn = st.button(messages["send"], type="primary", use_container_width=True)
+    with col2:
+        clear_btn = st.button(messages["clear"], use_container_width=True)
+    
+    # Process message
+    if send_btn and user_input.strip():
+        with st.spinner(messages["thinking"]):
+            response = chat_with_assistant(user_input, st.session_state.language)
+            
+            # Add to chat history
+            st.session_state.chat_history.append({
+                "user": user_input,
+                "assistant": response
+            })
+            st.rerun()
+    
+    # Clear chat
+    if clear_btn:
+        st.session_state.chat_history = []
+        st.rerun()
+    
+    # Footer
+    st.markdown("---")
+    st.info("""
+    **Note**: This application uses the Gemini API for data classification. 
+    Make sure you have set the `GEMINI_API_KEY` in your Streamlit secrets.
+    """)
 
 if __name__ == "__main__":
     main()
-
-# SECRETS SETUP INSTRUCTIONS:
-# 
-# Method 1: Local Development
-# Create file: .streamlit/secrets.toml
-# Add: GEMINI_API_KEY = "your_api_key_here"
-#
-# Method 2: Streamlit Cloud
-# 1. Go to app dashboard
-# 2. Settings → Secrets
-# 3. Add: GEMINI_API_KEY = "your_api_key_here"
-
-if __name__ == "__main__":
-    main()
-
-# To run in Colab:
-# !streamlit run app.py --server.port 8501 --server.address 0.0.0.0
