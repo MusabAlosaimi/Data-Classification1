@@ -127,10 +127,19 @@ def get_messages(lang):
 def is_classification_related(text):
     """Check if the message is related to data classification"""
     classification_keywords = [
-        'classify', 'classification', 'data', 'secret', 'confidential', 'public', 'internal',
-        'تصنيف', 'بيانات', 'سري', 'محدود', 'عام', 'داخلي'
+        'excel', 'file', 'document', 'database', 'sheet', 'data', 'information',
+        'user', 'employee', 'customer', 'personal', 'financial', 'contract',
+        'report', 'record', 'list', 'table', 'system', 'server', 'folder',
+        'email', 'message', 'photo', 'video', 'backup', 'log', 'config',
+        'classify', 'classification', 'secret', 'confidential', 'public', 'internal',
+        'security', 'sensitive', 'private', 'restricted', 'open', 'protected',
+        'ملف', 'بيانات', 'معلومات', 'مستخدم', 'موظف', 'عميل', 'شخصي', 'مالي',
+        'تصنيف', 'سري', 'محدود', 'عام', 'داخلي', 'حساس', 'محمي'
     ]
+    
     text_lower = text.lower()
+    
+    # If it contains any data-related keywords, it's probably about classification
     return any(keyword in text_lower for keyword in classification_keywords)
 
 def create_classification_prompt(user_data, user_guess, lang):
@@ -329,11 +338,7 @@ def main():
         # Process message
         if send_btn and user_input.strip():
             if not api_key:
-                st.markdown(f"""
-                <div class="error-message">
-                    {messages['no_api']}
-                </div>
-                """, unsafe_allow_html=True)
+                st.error("❌ No API key available")
             else:
                 with st.spinner(messages["thinking"]):
                     response = chat_with_assistant(api_key, user_input, st.session_state.language)
@@ -376,14 +381,6 @@ def main():
             if st.button(f"📄 {example}", key=f"ex_{hash(example)}"):
                 st.session_state.chat_input_area = example
                 st.rerun()
-
-    # Footer
-    st.markdown("---")
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown("### 🚀 [Get your Gemini API Key](https://makersuite.google.com/app/apikey)")
-    with col2:
-        st.markdown("### 🔐 [Setup Streamlit Secrets](https://docs.streamlit.io/streamlit-community-cloud/get-started/deploy-an-app/connect-to-data-sources/secrets-management)")
 
 if __name__ == "__main__":
     main()
